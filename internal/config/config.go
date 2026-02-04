@@ -17,6 +17,7 @@ type AppState struct {
 	refreshRate     int
 	hotkeyMode      string // "Toggle" or "Hold"
 	hotkey          int    // Virtual Key Code
+	renderBackend   string
 }
 
 func NewAppState() *AppState {
@@ -37,6 +38,7 @@ func (s *AppState) SetDefaults() {
 	s.followCursor = false
 	s.hotkeyMode = "Toggle"
 	s.hotkey = 0 // None
+	s.renderBackend = "Auto"
 }
 
 // Getters
@@ -50,6 +52,12 @@ func (s *AppState) Hotkey() int {
 	s.RLock()
 	defer s.RUnlock()
 	return s.hotkey
+}
+
+func (s *AppState) RenderBackend() string {
+	s.RLock()
+	defer s.RUnlock()
+	return s.renderBackend
 }
 
 func (s *AppState) IsActive() bool {
@@ -153,6 +161,12 @@ func (s *AppState) SetHotkey(v int) {
 	s.Lock()
 	defer s.Unlock()
 	s.hotkey = v
+}
+
+func (s *AppState) SetRenderBackend(v string) {
+	s.Lock()
+	defer s.Unlock()
+	s.renderBackend = v
 }
 
 func GetColorFromInt(c int) color.Color {

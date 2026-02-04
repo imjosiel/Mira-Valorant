@@ -117,11 +117,6 @@ func RunScopeWindow(state *config.AppState) {
 	// Prevent the scope window from being captured by BitBlt/screen capture
 	SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
 
-	// High Performance Timer (~60 FPS)
-	// 33ms = ~30 FPS
-	// 16ms = ~60 FPS
-	// 8ms  = ~120 FPS
-	// Using 10ms target for smoother experience (~100 FPS cap)
 	ticker := time.NewTicker(time.Millisecond * 10)
 	defer ticker.Stop()
 
@@ -196,6 +191,7 @@ func RunScopeWindow(state *config.AppState) {
 		zoom := state.ZoomLevel()
 
 		// Render
+		backend := state.RenderBackend()
 		hdcWindow := win.GetDC(hwnd)
 
 		// Create Mem DC for double buffering
@@ -203,28 +199,23 @@ func RunScopeWindow(state *config.AppState) {
 		hBitmap := win.CreateCompatibleBitmap(hdcWindow, size, size)
 		hOld := win.SelectObject(hdcMem, win.HGDIOBJ(hBitmap))
 
-		// 1. Capture Screen (StretchBlt from Screen DC to Mem DC)
-		// We capture around the target point (Cursor or Screen Center)
 		srcSize := float64(size) / zoom
 		srcX := targetX - int(srcSize/2)
 		srcY := targetY - int(srcSize/2)
 
-		hdcScreen := win.GetDC(0)
-
-		// Set stretch mode to COLORONCOLOR (simpler/faster) or HALFTONE (better quality)
-		// HALFTONE is slower but looks better. COLORONCOLOR is fastest.
-		// Trying HALFTONE first for quality, if slow switch to COLORONCOLOR (3)
-		win.SetStretchBltMode(hdcMem, win.HALFTONE)
-		win.SetBrushOrgEx(hdcMem, 0, 0, nil)
-
-		win.StretchBlt(
-			hdcMem,
-			0, 0, size, size,
-			hdcScreen,
-			int32(srcX), int32(srcY), int32(srcSize), int32(srcSize),
-			win.SRCCOPY,
-		)
-		win.ReleaseDC(0, hdcScreen)
+		if backend == "GDI" || backend == "Auto" {
+			hdcScreen := win.GetDC(0)
+			win.SetStretchBltMode(hdcMem, win.HALFTONE)
+			win.SetBrushOrgEx(hdcMem, 0, 0, nil)
+			win.StretchBlt(
+				hdcMem,
+				0, 0, size, size,
+				hdcScreen,
+				int32(srcX), int32(srcY), int32(srcSize), int32(srcSize),
+				win.SRCCOPY,
+			)
+			win.ReleaseDC(0, hdcScreen)
+		}
 
 		// 2. Draw Border
 		borderEnabled := state.BorderEnabled()

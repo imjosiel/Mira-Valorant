@@ -16,7 +16,7 @@ func RunControlWindow(state *config.AppState) {
 	var zoomLabel, sizeLabel, thickLabel *walk.Label
 	var activeCheckBox, followCheckBox, borderCheckBox *walk.CheckBox
 	var zoomSlider, sizeSlider, thickSlider *walk.Slider
-	var colorComboBox, keyComboBox, modeComboBox *walk.ComboBox
+	var colorComboBox, keyComboBox, modeComboBox, backendComboBox *walk.ComboBox
 
 	// Key Map for Dropdown
 	keyMap := []struct {
@@ -140,6 +140,27 @@ func RunControlWindow(state *config.AppState) {
 						Checked:  false,
 						OnCheckedChanged: func() {
 							state.SetFollowCursor(followCheckBox.Checked())
+						},
+					},
+					Composite{
+						Layout: HBox{},
+						Children: []Widget{
+							Label{Text: "Backend:"},
+							ComboBox{
+								AssignTo:     &backendComboBox,
+								Model:        []string{"Automático (DirectX)", "Compatibilidade (GDI)"},
+								CurrentIndex: 0,
+								OnCurrentIndexChanged: func() {
+									if backendComboBox != nil {
+										idx := backendComboBox.CurrentIndex()
+										if idx == 0 {
+											state.SetRenderBackend("Auto")
+										} else {
+											state.SetRenderBackend("GDI")
+										}
+									}
+								},
+							},
 						},
 					},
 				},
