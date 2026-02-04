@@ -1,11 +1,28 @@
 package main
 
 import (
+	"syscall"
+
 	"mira-valorant/internal/config"
 	"mira-valorant/internal/ui"
+
+	"github.com/lxn/win"
 )
 
+var (
+	kernel32             = syscall.NewLazyDLL("kernel32.dll")
+	procGetConsoleWindow = kernel32.NewProc("GetConsoleWindow")
+)
+
+func hideConsoleWindow() {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd != 0 {
+		win.ShowWindow(win.HWND(hwnd), win.SW_HIDE)
+	}
+}
+
 func main() {
+	hideConsoleWindow()
 	// 1. Initialize State
 	state := config.NewAppState()
 	state.SetDefaults()
